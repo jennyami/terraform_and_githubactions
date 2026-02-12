@@ -30,3 +30,9 @@ data "aws_iam_policy_document" "sqs_policy_doc" {
     ]
   }
 }
+
+
+resource "aws_sqs_queue" "new_queue" {
+  name = "z-dh-sqs-ap-southeast-1-new_queue"
+  tags = var.default_tags
+}
