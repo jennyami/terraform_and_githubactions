@@ -8,6 +8,12 @@ variable "default_tags" {
   type = map(string)
   default = {
     project_id = "1001"
+    dh_platform = "platform"
+    dh_tribe = "finance-systems"
+    dh_app = "github-terraform"
+    dh_squad = "fs-integration"
+    dh_cc_id = "1001010035"
+
   }
 }
 
