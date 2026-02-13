@@ -12,6 +12,29 @@ permissions:
   id-token: write # REQUIRED: This allows OIDC authentication
 
 jobs:
+  list-files-manual:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code with sufficient depth
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # Fetch at least 2 commits to compare the head with its parent
+          fetch-depth: 2 
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          # Use git diff to compare the current HEAD with its parent commit
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | xargs)
+          echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+
+      - name: Display changed files
+        run: |
+          for file in ${{ steps.changed-files.outputs.changed_files }}; do
+            echo "$file was changed"
+          done
+
   terraform:
     name: "Terraform"
     runs-on: ubuntu-latest
