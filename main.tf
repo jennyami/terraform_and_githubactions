@@ -36,3 +36,10 @@ resource "aws_sqs_queue" "new_queue" {
   name = "z-dh-sqs-ap-southeast-1-new_queue"
   tags = var.default_tags
 }
+
+
+
+resource "aws_sqs_queue" "new_queue2" {
+  name = "z-dh-sqs-ap-southeast-1-new_queue2"
+  tags = var.default_tags
+}
