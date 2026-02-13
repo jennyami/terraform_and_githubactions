@@ -12,6 +12,21 @@ permissions:
   id-token: write # REQUIRED: This allows OIDC authentication
 
 jobs:
+  print_title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        # Use actions/checkout@v4 for security best practices
+        uses: actions/checkout@v4 
+
+      - name: Set PR title as environment variable
+        run: echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
+        # Using GITHUB_ENV makes the variable available to subsequent steps in the same job.
+
+      - name: Print Title of PR
+        # Safely use the environment variable
+        run: echo "The Title of your PR is ${{ env.PR_TITLE }}"
+        
   list-files-manual:
     runs-on: ubuntu-latest
     steps:
