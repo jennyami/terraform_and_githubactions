@@ -1,0 +1,90 @@
+# .github/workflows/validate-pr-title-and-scope.yml
+name: Validate PR Title and Scope
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate PR title and changed files
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -e
+
+          echo "Checking PR title: $PR_TITLE"
+          echo "Base SHA: $BASE_SHA"
+          echo "Head SHA: $HEAD_SHA"
+
+          TITLE_REGEX='^PR_ticket_(config-(dev|qa|prod)|inframodule)_[a-z0-9_]+$'
+
+          if [[ ! "$PR_TITLE" =~ $TITLE_REGEX ]]; then
+            echo "❌ Invalid PR title format."
+            echo ""
+            echo "Expected format:"
+            echo "  PR_ticket_<config-<env>|inframodule>_<description>"
+            exit 1
+          fi
+
+          echo "✅ PR title format is valid."
+
+          # Determine PR type
+          if [[ "$PR_TITLE" =~ ^PR_ticket_config-dev_ ]]; then
+            PR_TYPE="config-dev"
+            ALLOWED_REGEX='^env/dev/'
+          elif [[ "$PR_TITLE" =~ ^PR_ticket_config-qa_ ]]; then
+            PR_TYPE="config-qa"
+            ALLOWED_REGEX='^env/qa/'
+          elif [[ "$PR_TITLE" =~ ^PR_ticket_config-prod_ ]]; then
+            PR_TYPE="config-prod"
+            ALLOWED_REGEX='^env/prod/'
+          elif [[ "$PR_TITLE" =~ ^PR_ticket_inframodule_ ]]; then
+            PR_TYPE="inframodule"
+            ALLOWED_REGEX='^(modules/|infra/)'
+          else
+            echo "❌ Unable to determine PR type from title."
+            exit 1
+          fi
+
+          echo "Detected PR type: $PR_TYPE"
+          echo "Allowed file pattern: $ALLOWED_REGEX"
+
+          # Fetch full history just in case
+          git fetch origin "$BASE_REF" --depth=1 || true
+
+          echo ""
+          echo "Changed files:"
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" | tee changed_files.txt
+
+          if [[ ! -s changed_files.txt ]]; then
+            echo "❌ No changed files found."
+            exit 1
+          fi
+
+          INVALID_FILES=$(grep -vE "$ALLOWED_REGEX" changed_files.txt || true)
+
+          if [[ -n "$INVALID_FILES" ]]; then
+            echo ""
+            echo "❌ Found files outside allowed scope for PR type '$PR_TYPE':"
+            echo "$INVALID_FILES"
+            echo ""
+            echo "Allowed paths for this PR type must match:"
+            echo "  $ALLOWED_REGEX"
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ All changed files are valid for PR type '$PR_TYPE'."
