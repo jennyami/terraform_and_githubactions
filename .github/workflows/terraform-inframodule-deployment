@@ -3,7 +3,7 @@ name: Terraform Promotion Pipeline
 on:
   push:
     branches:
-      # - main
+       - main
 
 jobs:
 
@@ -46,21 +46,4 @@ jobs:
       - run: terraform apply -auto-approve
 
 
-  # -----------------
-  # PROD
-  # -----------------
-  prod:
-    name: Deploy Production
-    runs-on: ubuntu-latest
-    needs: qas
-    environment: prod
 
-    defaults:
-      run:
-        working-directory: environments/prod
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
-      - run: terraform init
-      - run: terraform apply -auto-approve
