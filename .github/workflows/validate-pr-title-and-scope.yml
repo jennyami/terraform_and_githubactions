@@ -67,7 +67,7 @@ jobs:
 
           echo ""
           echo "Changed files:"
-          git diff --name-only "$BASE_SHA" "$HEAD_SHA" | tee changed_files.txt
+          git diff --name-only "$HEAD_SHA" | tee changed_files.txt
 
           if [[ ! -s changed_files.txt ]]; then
             echo "❌ No changed files found."
